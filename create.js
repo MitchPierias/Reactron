@@ -1,5 +1,6 @@
 const colors = require('colors');
 const path = require('path');
+const fs = require('fs');
 
 async function createBoilerplate(args) {
     const spinner = require('./spinner');
@@ -33,12 +34,7 @@ async function createBoilerplate(args) {
     spinner.create('Configuring project...');
     try {
         // Update package file
-        const pkg = require(path.resolve(__dirname, `${projectName}/package.json`));
-        pkg.name = projectName;
-        pkg.version = "1.0.0";
-        // Save package file
-        const { writeFileSync } = require('fs');
-        writeFileSync(path.resolve(__dirname, `${projectName}/package.json`), JSON.stringify(pkg), 'utf8');
+        await updatePackage(`${outputPath}/package.json`, { name:projectName, version:"0.1.0" });
         // Output completion message
         const cmd = (await getPackageManager() === 'yarn') ? 'yarn && yarn start' : 'npm install && npm start'
         spinner.end(`Run \`${cmd}\` inside of "${projectName}" to start the app`)
@@ -48,18 +44,55 @@ async function createBoilerplate(args) {
     }
 }
 
+/**
+ * Get Repository Meta
+ * 
+ * @desc Retreives metadata for the specified repository if it exists
+ * @dev [Mitch Pierias](github.com/MitchPierias)
+ * @param {string} repo - Repository name
+ * @returns {string|boolean} meta - Repository data or false
+ */
 async function getRepositoryMeta(repo) {
+    // Request repository data from GitHub
     const Github = require('@octokit/rest')();
     return await Github.repos.get({owner: 'MitchPierias', repo})
     .then(response => response.data)
-    .catch(error => false);
+    .catch(() => false);
 }
 
+/**
+ * Clone repository
+ * 
+ * @desc Downloads and unpacks the specified repository to the location provided
+ * @dev [Mitch Pierias](github.com/MitchPierias)
+ * @param {string} repoUrl - Repository tar url
+ * @param {string} outputPath - Path to unpack tar
+ */
 async function cloneRepository(repoUrl, outputPath) {
+    
     const got = require('got');
     const tar = require('tar');
 
-    await got.stream(repoUrl).pipe(tar.x({ cwd:outputPath, strip:1 }));
+    return new Promise((resolve, reject) => {
+        got.stream(repoUrl)
+        .on('error', error => reject(error))
+        .on('response', () => resolve('Done!'))
+        .pipe(tar.extract({ cwd:outputPath, strip:1 }))
+    });
+}
+
+/**
+ * Update Package
+ * 
+ * @desc Updates the configuration of the `package.json` at the specified location
+ * @param {string} packagePath - Path to `package.json`
+ * @param {object} config - Configuration arguments
+ */
+async function updatePackage(packagePath, config) {
+    // Read package and configure
+    const fileBuffer = fs.readFileSync(packagePath);
+    const pkg = JSON.parse(fileBuffer);
+    return Promise.resolve(fs.writeFileSync(packagePath, JSON.stringify({...pkg, ...config})));
 }
 
 async function getPackageManager() {
