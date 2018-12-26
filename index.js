@@ -5,7 +5,6 @@ const arg = require('arg');
 const colors = require('colors');
 const pkg = require(path.resolve(__dirname, './package.json'));
 const createBoilerplate = require('./create');
-
 // Flag Creation
 const args = arg({
     // Types
