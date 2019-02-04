@@ -20,7 +20,7 @@ async function createBoilerplate(args) {
         initializeDirectory(projectName);
         spinner.end();
     } catch (err) {
-        spinner.fail('Directory exists');
+        spinner.end();
     }
 
     spinner.create('Downloading template...');

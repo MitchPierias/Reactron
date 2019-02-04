@@ -1,6 +1,6 @@
 {
   "name": "create-reactron-app",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Simple Electron with React Project Generator",
   "main": "index.js",
   "scripts": {
