@@ -1,18 +1,20 @@
 {
   "name": "create-reactron-app",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Simple Electron with React Project Generator",
   "main": "index.js",
   "scripts": {
-    "start": "npm index",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index",
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
     "url": "github.com/MitchPierias/Reactron"
   },
-  "author": "Mitch Pierias <github.com/MitchPierias>",
-  "license": "ISC",
+  "preferGlobal": true,
+  "bin": {
+    "create-reactron-app": "./index.js"
+  },
   "dependencies": {
     "@octokit/rest": "^16.2.0",
     "arg": "^3.0.0",
@@ -24,5 +26,12 @@
     "path": "^0.12.7",
     "tar": "^4.4.8",
     "util": "^0.11.1"
+  },
+  "author": "Mitch Pierias <github.com/MitchPierias>",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "rimraf": "^2.6.3"
   }
 }

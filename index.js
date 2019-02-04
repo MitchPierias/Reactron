@@ -4,7 +4,7 @@ const path = require('path');
 const arg = require('arg');
 const colors = require('colors');
 const pkg = require(path.resolve(__dirname, './package.json'));
-const createBoilerplate = require('./create');
+const { createBoilerplate } = require('./create');
 // Flag Creation
 const args = arg({
     // Types
@@ -34,7 +34,7 @@ if (args['--help'] || (!args._[0])) {
         ${colors.cyan("OPTIONS:")}
             --help,     -h      Displays this help message.
             --version,  -v      Outputs the current ${pkg.name} version.
-            --name,     -n      Project name input
+            --name,     -n      Your project name
     `)
 
     process.exit(0);

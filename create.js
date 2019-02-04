@@ -5,11 +5,11 @@ const fs = require('fs');
 async function createBoilerplate(args) {
     const spinner = require('./spinner');
     const projectName = args['--name'] || args._[0];
-    const outputPath = path.resolve(process.cwd(),projectName);
+    const outputPath = path.resolve(process.cwd(), projectName);
 
     spinner.create('Searching for repository...');
     try {
-        await getRepositoryMeta('React-Electron-Boilerplate');
+        await validateRepository('React-Electron-Boilerplate');
         spinner.end();
     } catch (error) {
         spinner.fail('Failed to find repository')
@@ -17,7 +17,7 @@ async function createBoilerplate(args) {
 
     spinner.create('Creating directory');
     try {
-        await require('make-dir')(outputPath)
+        initializeDirectory(projectName);
         spinner.end();
     } catch (err) {
         spinner.fail('Directory exists');
@@ -34,7 +34,7 @@ async function createBoilerplate(args) {
     spinner.create('Configuring project...');
     try {
         // Update package file
-        await updatePackage(`${outputPath}/package.json`, { name:projectName, version:"0.1.0" });
+        await configureProject({ name:projectName, version:"0.1.0" }, outputPath);
         // Output completion message
         const cmd = (await getPackageManager() === 'yarn') ? 'yarn && yarn start' : 'npm install && npm start'
         spinner.end(`Run \`${cmd}\` inside of "${projectName}" to start the app`)
@@ -44,41 +44,61 @@ async function createBoilerplate(args) {
     }
 }
 
+function initializeDirectory(projectName) {
+    const outputPath = path.resolve(process.cwd(), projectName);
+    if (!fs.existsSync(outputPath)) {
+        fs.mkdirSync(outputPath);
+    } else {
+        throw new Error("Directory exists");
+    }
+}
+
 /**
- * Get Repository Meta
+ * Validate Repository
  * 
  * @desc Retreives metadata for the specified repository if it exists
  * @dev [Mitch Pierias](github.com/MitchPierias)
  * @param {string} repo - Repository name
- * @returns {string|boolean} meta - Repository data or false
+ * @returns {object|boolean} meta - Repository data or false
  */
-async function getRepositoryMeta(repo) {
-    // Request repository data from GitHub
+async function validateRepository(repo) {
     const Github = require('@octokit/rest')();
-    return await Github.repos.get({owner: 'MitchPierias', repo})
-    .then(response => response.data)
-    .catch(() => false);
+    return new Promise((resolve, reject) => {
+        Github.repos.get({owner:'MitchPierias', repo}).then(response => {
+            resolve(response.data);
+        }).catch(err => {
+            reject("Repo couldn't be found");
+        });
+    });
 }
 
 /**
- * Clone repository
+ * Clone Repository
  * 
  * @desc Downloads and unpacks the specified repository to the location provided
  * @dev [Mitch Pierias](github.com/MitchPierias)
  * @param {string} repoUrl - Repository tar url
  * @param {string} outputPath - Path to unpack tar
  */
-async function cloneRepository(repoUrl, outputPath) {
-    
+function cloneRepository(repoUrl, toPath) {
+
     const got = require('got');
     const tar = require('tar');
-
+    
     return new Promise((resolve, reject) => {
-        got.stream(repoUrl)
-        .on('error', error => reject(error))
-        .on('response', () => resolve('Done!'))
-        .pipe(tar.extract({ cwd:outputPath, strip:1 }))
+        got.stream(repoUrl).pipe(tar.extract({ cwd:toPath, strip:1 })).on('error', error => {
+            reject(error);
+        }).on('end', () => {
+            resolve('Done');
+        });
     });
+}
+
+function configureProject(config, atPath) {
+    const pkgPath = path.resolve(atPath, 'package.json');
+    const pkg = require(pkgPath);
+    pkg.name = config.name;
+    return fs.writeFileSync(pkgPath, JSON.stringify(pkg));
 }
 
 /**
@@ -129,4 +149,10 @@ async function getPackageManager() {
     return packageManager;
 }
 
-module.exports = createBoilerplate;
+module.exports = {
+    createBoilerplate,
+    initializeDirectory,
+    validateRepository,
+    cloneRepository,
+    configureProject
+}
