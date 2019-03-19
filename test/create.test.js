@@ -8,7 +8,7 @@ const {
     validateRepository,
     cloneRepository,
     configureProject
-} = require('./../create');
+} = require('./../build/lib/create');
 const ROOT_PATH = path.resolve(__dirname, '..');
 
 describe('Create', () => {
@@ -36,6 +36,8 @@ describe('Create', () => {
         initializeDirectory(projectName);
         assert.isTrue(fs.existsSync(sampleDirectory), "Should create directory");
     });
+
+    it("Should match existing project folder");
 
     it("Should download repository to folder", () => {
         return cloneRepository(repoSource, sampleDirectory).then(success => {

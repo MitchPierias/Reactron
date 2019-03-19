@@ -1,8 +1,15 @@
-const colors = require('colors');
-const path = require('path');
-const fs = require('fs');
+import arg from 'arg';
+import colors from 'colors';
+import path from 'path';
+import fs from 'fs';
 
-async function createBoilerplate(args) {
+interface ProjectConfig {
+    name:string;
+    version:string;
+}
+
+export const createBoilerplate = async (args:arg.Result<arg.Spec>): Promise<void> => {
+
     const spinner = require('./spinner');
     const projectName = args['--name'] || args._[0];
     const outputPath = path.resolve(process.cwd(), projectName);
@@ -34,7 +41,7 @@ async function createBoilerplate(args) {
     spinner.create('Configuring project...');
     try {
         // Update package file
-        await configureProject({ name:projectName, version:"0.1.0" }, outputPath);
+        await configureProjectPackage({ name:projectName, version:"0.1.0" }, outputPath);
         // Output completion message
         const cmd = (await getPackageManager() === 'yarn') ? 'yarn && yarn start' : 'npm install && npm start'
         spinner.end(`Run \`${cmd}\` inside of "${projectName}" to start the app`)
@@ -44,7 +51,13 @@ async function createBoilerplate(args) {
     }
 }
 
-function initializeDirectory(projectName) {
+/**
+ * Intialize Directory
+ * @desc Creates a directory when it doesn't exist
+ * @dev [Mitch Pierias](github.com/MitchPierias)
+ * @param {string} projectName Name of project folder
+ */
+export const initializeDirectory = (projectName:string): void => {
     const outputPath = path.resolve(process.cwd(), projectName);
     if (!fs.existsSync(outputPath)) {
         fs.mkdirSync(outputPath);
@@ -61,12 +74,12 @@ function initializeDirectory(projectName) {
  * @param {string} repo - Repository name
  * @returns {object|boolean} meta - Repository data or false
  */
-async function validateRepository(repo) {
+export const validateRepository = async (repo:string): Promise<any> => {
     const Github = require('@octokit/rest')();
     return new Promise((resolve, reject) => {
-        Github.repos.get({owner:'MitchPierias', repo}).then(response => {
+        Github.repos.get({owner:'MitchPierias', repo}).then((response:any) => {
             resolve(response.data);
-        }).catch(err => {
+        }).catch((err:Error) => {
             reject("Repo couldn't be found");
         });
     });
@@ -74,19 +87,19 @@ async function validateRepository(repo) {
 
 /**
  * Clone Repository
- * 
  * @desc Downloads and unpacks the specified repository to the location provided
  * @dev [Mitch Pierias](github.com/MitchPierias)
  * @param {string} repoUrl - Repository tar url
  * @param {string} outputPath - Path to unpack tar
+ * @returns {Promise<string>} Completed message
  */
-function cloneRepository(repoUrl, toPath) {
+export const cloneRepository = (repoUrl:string, toPath:string): Promise<string> => {
 
     const got = require('got');
     const tar = require('tar');
     
     return new Promise((resolve, reject) => {
-        got.stream(repoUrl).pipe(tar.extract({ cwd:toPath, strip:1 })).on('error', error => {
+        got.stream(repoUrl).pipe(tar.extract({ cwd:toPath, strip:1 })).on('error', (error:Error) => {
             reject(error);
         }).on('end', () => {
             resolve('Done');
@@ -94,33 +107,26 @@ function cloneRepository(repoUrl, toPath) {
     });
 }
 
-function configureProject(config, atPath) {
+/**
+ * Configure Project
+ * @desc Configures the package.json with the specified configuration options
+ * @dev [Mitch Pierias](github.com/MitchPierias)
+ * @param config Configuration settings for the package.json
+ * @param atPath Path of the package.json
+ */
+export const configureProjectPackage = (config:ProjectConfig, atPath:string): void => {
     const pkgPath = path.resolve(atPath, 'package.json');
     const pkg = require(pkgPath);
     pkg.name = config.name;
     return fs.writeFileSync(pkgPath, JSON.stringify(pkg));
 }
 
-/**
- * Update Package
- * 
- * @desc Updates the configuration of the `package.json` at the specified location
- * @param {string} packagePath - Path to `package.json`
- * @param {object} config - Configuration arguments
- */
-async function updatePackage(packagePath, config) {
-    // Read package and configure
-    const fileBuffer = fs.readFileSync(packagePath);
-    const pkg = JSON.parse(fileBuffer);
-    return Promise.resolve(fs.writeFileSync(packagePath, JSON.stringify({...pkg, ...config})));
-}
-
-async function getPackageManager() {
+const getPackageManager = async (): Promise<string|null> => {
 
     const { promisify } = require('util');
     const { exec: defaultExec } = require('child_process');
 
-    let packageManager = 'npm';
+    let packageManager:string|null = 'npm';
     const cwd = process.cwd();
     const exec = promisify(defaultExec);
 
@@ -130,7 +136,7 @@ async function getPackageManager() {
         packageManager = 'npm';
 
         try {
-            await exec(`${pm} -v`, { cwd });
+            await exec(`${packageManager} -v`, { cwd });
         } catch (error) {
             packageManager = null;
         }
@@ -146,13 +152,5 @@ async function getPackageManager() {
         `));
     }
 
-    return packageManager;
-}
-
-module.exports = {
-    createBoilerplate,
-    initializeDirectory,
-    validateRepository,
-    cloneRepository,
-    configureProject
+    return Promise.resolve(packageManager);
 }

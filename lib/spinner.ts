@@ -1,17 +1,21 @@
-const ora = require('ora');
-const colors = require('colors');
-const isTTY = process.env.CI ? false : process.stdout.isTTY;
+import ora from 'ora';
+import colors from 'colors';
 
-const cache = {};
+interface Cache {
+    spinner?:any
+}
+
+const cache:Cache = {};
+const isTTY:boolean = process.env.CI ? false : process.stdout.isTTY!;
 
 /**
  * Create Spinner
  * 
  * @description Creates a new spinner instance with the given message.
  * @dev [Mitch Pierias](github.com/MitchPierias)
- * @param {String} text - Spinner message.
+ * @param {string} text - Spinner display message
  */
-function create(text) {
+export const create = (text:string) => {
     // Handle process piping
     if (!isTTY) {
         console.log(`create-reactron-app - ${text}`);
@@ -37,7 +41,7 @@ function create(text) {
  * @param {string} message - Spinner message.
  * @param {boolean} isError - Outputs messsage as error if true
  */
-function end(message, isError = false) {
+export const end = (message:string, isError:boolean = false) => {
     // Handle process piping
     if (!isTTY) {
         console.log(`create-react-app - ${message}`);
@@ -60,15 +64,9 @@ function end(message, isError = false) {
  * 
  * @description Stops the spinner with error message.
  * @dev [Mitch Pierias](github.com/MitchPierias)
- * @param {String} message - Spinner message.
+ * @param {string} message - Spinner message.
  */
-function fail(message) {
+export const fail = (message:string) => {
     end(message, true);
     process.exit(1);
-}
-
-module.exports = {
-    create,
-    end,
-    fail
 }

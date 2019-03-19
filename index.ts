@@ -1,12 +1,10 @@
 #!/usr/bin/env node
-
-const path = require('path');
-const arg = require('arg');
-const colors = require('colors');
-const pkg = require(path.resolve(__dirname, './package.json'));
-const { createBoilerplate } = require('./create');
+import arg from 'arg';
+import colors from 'colors';
+import pkg = require('./package.json');
+import { createBoilerplate } from './lib/create';
 // Flag Creation
-const args = arg({
+const args:any = arg({
     // Types
     '--help': Boolean,
     '--version': Boolean,
