@@ -1,0 +1,15 @@
+version: 2.0
+phases:
+  commands:
+    - npm install npm@latest -g
+    - npm set progress=false
+    - npm install -g npm-check-updates
+  install:
+    commands:
+      - npm install
+  pre-build:
+    commands:
+      - npm run build
+  publish:
+    commands:
+      - npm run publish
